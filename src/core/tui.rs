@@ -15,6 +15,7 @@ use xdg::BaseDirectories;
 
 use core::{Command, Terminal, TerminalEvent};
 use widgets::{CommandPrompt, Editor};
+use std::sync::mpsc::{Sender, Receiver, channel};
 
 pub struct Tui {
     editor: Editor,
@@ -22,10 +23,11 @@ pub struct Tui {
     term: Terminal,
     term_size: (u16, u16),
     shutdown: bool,
+    out_sender: Sender<String>,
 }
 
 impl Tui {
-    pub fn new(mut client: Client, events: UnboundedReceiver<CoreEvent>) -> Result<Self, Error> {
+    pub fn new(mut client: Client, events: UnboundedReceiver<CoreEvent>) -> Result<(Self, Receiver<String>) , Error> {
         let conf_dir = BaseDirectories::with_prefix("xi")
             .ok()
             .and_then(|dirs| Some(dirs.get_config_home().to_string_lossy().into_owned()));
@@ -34,13 +36,16 @@ impl Tui {
             .map_err(|_| ())
         );
 
-        Ok(Tui {
+        let (tx, rx) = channel();
+
+        Ok((Tui {
             term: Terminal::new()?,
             shutdown: false,
             term_size: (0, 0),
             editor: Editor::new(client, events),
             prompt: CommandPrompt::default(),
-        })
+            out_sender: tx,
+        }, rx))
     }
 
     fn handle_resize(&mut self, size: (u16, u16)) {
@@ -67,6 +72,7 @@ impl Tui {
             Command::PageUp => self.editor.page_up(),
             Command::ToggleLineNumbers => self.editor.toggle_line_numbers(),
             Command::Out(string) => {
+                self.out_sender.send(string).unwrap();
                 self.exit();
             },
             _ => {

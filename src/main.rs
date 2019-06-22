@@ -109,7 +109,9 @@ fn run() -> Result<(), Error> {
     info!("starting logging xi-core errors");
 
     info!("initializing the TUI");
-    let mut tui = Tui::new(client, core_events_rx).context("Failed to initialize the TUI")?;
+    let tui = Tui::new(client, core_events_rx);
+
+    let (mut tui, out_rx) = tui.context("Failed to initialize the TUI")?;
 
     tui.handle_cmd(Command::Open(matches.value_of("file").map(ToString::to_string)));
     tui.handle_cmd(Command::SetTheme("base16-eighties.dark".into()));
@@ -118,6 +120,10 @@ fn run() -> Result<(), Error> {
     tokio::run(tui.map_err(|err| {
         error!("{}", err);
     }));
+
+    if let Ok(out) = out_rx.recv() {
+        print!("{}", out);
+    }
 
     Ok(())
 }
