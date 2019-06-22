@@ -18,7 +18,7 @@ use widgets::{CommandPrompt, Editor};
 
 pub struct Tui {
     editor: Editor,
-    prompt: Option<CommandPrompt>,
+    prompt: CommandPrompt,
     term: Terminal,
     term_size: (u16, u16),
     shutdown: bool,
@@ -39,7 +39,7 @@ impl Tui {
             shutdown: false,
             term_size: (0, 0),
             editor: Editor::new(client, events),
-            prompt: None,
+            prompt: CommandPrompt::default(),
         })
     }
 
@@ -54,13 +54,7 @@ impl Tui {
 
     pub fn handle_cmd(&mut self, cmd: Command) {
         match cmd {
-            Command::Cancel => {
-                self.prompt = None;
-            }
             Command::Quit => self.exit(),
-            Command::Save(view) => self.editor.save(view),
-            Command::Back => self.editor.back(),
-            Command::Delete => self.editor.delete(),
             Command::Open(file) => self.editor.open(file),
             Command::SetTheme(theme) => self.editor.set_theme(&theme),
             Command::NextBuffer => self.editor.next_buffer(),
@@ -72,6 +66,9 @@ impl Tui {
             Command::PageDown => self.editor.page_down(),
             Command::PageUp => self.editor.page_up(),
             Command::ToggleLineNumbers => self.editor.toggle_line_numbers(),
+            _ => {
+                panic!("unwated command: {:?}", cmd);
+            },
         }
     }
 
@@ -79,32 +76,17 @@ impl Tui {
     fn handle_input(&mut self, event: Event) {
         match event {
             Event::Key(Key::Ctrl('c')) => self.exit(),
-            Event::Key(Key::Alt('x')) => {
-                if let Some(ref mut prompt) = self.prompt {
-                    match prompt.handle_input(&event) {
-                        Ok(None) => {},
-                        Ok(Some(_)) => unreachable!(),
-                        Err(_) => unreachable!()
-                    }
-                } else {
-                    self.prompt = Some(CommandPrompt::default());
-                }
-            }
+            Event::Key(Key::Up) => self.handle_cmd(Command::MoveUp),
+            Event::Key(Key::Down) => self.handle_cmd(Command::MoveDown),
             event => {
-                // No command prompt is active, process the event normally.
-                if self.prompt.is_none() {
-                    self.editor.handle_input(event);
-                    return;
-                }
-
-                // A command prompt is active.
-                let mut prompt = self.prompt.take().unwrap();
-                match prompt.handle_input(&event) {
-                    Ok(None) => { self.prompt = Some(prompt); },
-                    Ok(Some(cmd)) => self.handle_cmd(cmd),
+                match self.prompt.handle_input(&event) {
                     Err(err) => {
                         error!("Failed to parse command: {:?}", err);
                     }
+                    Ok(Some(cmd)) => {
+                        self.handle_cmd(cmd);
+                    }
+                    _ => {},
                 }
             }
         }
@@ -140,11 +122,8 @@ impl Tui {
     }
 
     fn render(&mut self) -> Result<(), Error> {
-        if let Some(ref mut prompt) = self.prompt {
-            prompt.render(self.term.stdout(), self.term_size.1)?;
-        } else {
-            self.editor.render(self.term.stdout())?;
-        }
+        self.editor.render(self.term.stdout())?;
+        self.prompt.render(self.term.stdout(), self.term_size.1)?;
         if let Err(e) = self.term.stdout().flush() {
             error!("failed to flush stdout: {}", e);
         }

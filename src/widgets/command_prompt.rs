@@ -36,14 +36,14 @@ impl CommandPrompt {
         if self.dex > 0 {
             self.dex -= 1;
         }
-        None
+        Some(Command::MoveLeft)
     }
 
     fn right(&mut self) -> Option<Command> {
         if self.dex < self.chars.len() {
             self.dex += 1;
         }
-        None
+        Some(Command::MoveRight)
     }
 
     fn delete(&mut self) -> Option<Command> {
@@ -57,10 +57,9 @@ impl CommandPrompt {
         if !self.chars.is_empty() {
             self.dex -= 1;
             self.chars.remove(self.dex);
-            None
-        } else {
-            Some(Command::Cancel)
         }
+
+        None
     }
 
     /// Gets called when any character is pressed.
