@@ -38,6 +38,8 @@ pub enum Command {
     SetTheme(String),
     /// Toggle displaying line numbers.
     ToggleLineNumbers,
+    /// String to send to stdout
+    Out(String),
 }
 
 #[derive(Debug)]

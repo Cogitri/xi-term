@@ -10,8 +10,6 @@ use core::{Command, ParseCommandError};
 use termion::clear::CurrentLine as ClearLine;
 use termion::cursor::Goto;
 
-use std::str::FromStr;
-
 #[derive(Debug, Default)]
 pub struct CommandPrompt {
     dex: usize,
@@ -20,15 +18,15 @@ pub struct CommandPrompt {
 
 impl CommandPrompt {
     /// Process a terminal event for the command prompt.
-    pub fn handle_input(&mut self, input: &Event) -> Result<Option<Command>, ParseCommandError> {
+    pub fn handle_input(&mut self, input: &Event) -> Option<Command> {
         match input {
             Event::Key(Key::Char('\n')) => self.finalize(),
-            Event::Key(Key::Backspace) | Event::Key(Key::Ctrl('h')) => Ok(self.back()),
-            Event::Key(Key::Delete) => Ok(self.delete()),
-            Event::Key(Key::Left) => Ok(self.left()),
-            Event::Key(Key::Right) => Ok(self.right()),
-            Event::Key(Key::Char(chr)) => Ok(self.new_key(*chr)),
-            _ => Ok(None),
+            Event::Key(Key::Backspace) | Event::Key(Key::Ctrl('h')) => self.back(),
+            Event::Key(Key::Delete) => self.delete(),
+            Event::Key(Key::Left) => self.left(),
+            Event::Key(Key::Right) => self.right(),
+            Event::Key(Key::Char(chr)) => self.new_key(*chr),
+            _ => None,
         }
     }
 
@@ -70,8 +68,8 @@ impl CommandPrompt {
     }
 
     /// Gets called when return is pressed,
-    fn finalize(&mut self) -> Result<Option<Command>, ParseCommandError> {
-        Ok(Some(FromStr::from_str(&self.chars)?))
+    fn finalize(&mut self) -> Option<Command> {
+        Some(Command::Out(self.chars.clone()))
     }
 
     pub fn render<W: Write>(&mut self, w: &mut W, row: u16) -> Result<(), Error> {

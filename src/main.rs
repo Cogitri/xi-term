@@ -118,5 +118,6 @@ fn run() -> Result<(), Error> {
     tokio::run(tui.map_err(|err| {
         error!("{}", err);
     }));
+
     Ok(())
 }

@@ -66,6 +66,9 @@ impl Tui {
             Command::PageDown => self.editor.page_down(),
             Command::PageUp => self.editor.page_up(),
             Command::ToggleLineNumbers => self.editor.toggle_line_numbers(),
+            Command::Out(string) => {
+                self.exit();
+            },
             _ => {
                 panic!("unwated command: {:?}", cmd);
             },
@@ -80,10 +83,7 @@ impl Tui {
             Event::Key(Key::Down) => self.handle_cmd(Command::MoveDown),
             event => {
                 match self.prompt.handle_input(&event) {
-                    Err(err) => {
-                        error!("Failed to parse command: {:?}", err);
-                    }
-                    Ok(Some(cmd)) => {
+                    Some(cmd) => {
                         self.handle_cmd(cmd);
                     }
                     _ => {},
