@@ -8,8 +8,6 @@ use std::str::FromStr;
 
 #[derive(Debug)]
 pub enum Command {
-    /// Close the CommandPrompt.
-    Cancel,
     /// Quit editor.
     Quit,
     /// Save the current file buffer.

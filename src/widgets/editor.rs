@@ -4,7 +4,6 @@ use std::io::Write;
 use futures::sync::mpsc::UnboundedReceiver;
 use futures::{Async, Future, Stream};
 
-use termion::event::Event;
 use tokio::run;
 use xrl::{Client, ClientResult, ScrollTo, ConfigChanged, Style, Update, ViewId};
 use indexmap::IndexMap;
@@ -46,12 +45,6 @@ impl Editor {
 
 /// Methods related to terminal input.
 impl Editor {
-    pub fn handle_input(&mut self, event: Event) {
-        if let Some(view) = self.views.get_mut(&self.current_view) {
-            view.handle_input(event)
-        }
-    }
-
     pub fn handle_resize(&mut self, size: (u16, u16)) {
         info!("setting new terminal size");
         self.size = size;
@@ -117,33 +110,6 @@ impl Editor {
     pub fn set_theme(&mut self, theme: &str) {
         let future = self.client.set_theme(theme).map_err(|_| ());
         run(future);
-    }
-
-    pub fn save(&mut self, view: Option<ViewId>) {
-        match view {
-            Some(view_id) => {
-                if let Some(view) = self.views.get_mut(&view_id) {
-                    view.save();
-                }
-            }
-            None => {
-                if let Some(view) = self.views.get_mut(&self.current_view) {
-                    view.save();
-                }
-            }
-        }
-    }
-
-    pub fn back(&mut self) {
-        if let Some(view) = self.views.get_mut(&self.current_view) {
-            view.back();
-        }
-    }
-
-    pub fn delete(&mut self) {
-        if let Some(view) = self.views.get_mut(&self.current_view) {
-            view.delete();
-        }
     }
 
     pub fn next_buffer(&mut self) {
