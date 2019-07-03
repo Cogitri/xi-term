@@ -29,6 +29,7 @@ use log4rs::config::{Appender, Config, Logger, Root};
 use xrl::spawn;
 
 use core::{Tui, TuiServiceBuilder, Command};
+use std::io::{stdin, Read, Write};
 
 fn configure_logs(logfile: &str) {
     let tui = FileAppender::builder().build(logfile).unwrap();
@@ -63,7 +64,6 @@ fn configure_logs(logfile: &str) {
 
 fn main() {
     if let Err(ref e) = run() {
-        use std::io::Write;
         let stderr = &mut ::std::io::stderr();
 
         writeln!(stderr, "error: {}", e).unwrap();
@@ -92,6 +92,15 @@ fn run() -> Result<(), Error> {
         configure_logs(logfile);
     }
 
+    let stdin_string = if matches.value_of("file").is_none() {
+        let mut buffer = String::new();
+        stdin().read_to_string(&mut buffer)?;
+        Some(buffer)
+    } else {
+        None
+    };
+
+
     info!("starting xi-core");
     let (tui_builder, core_events_rx) = TuiServiceBuilder::new();
     let (client, core_stderr) = spawn(matches.value_of("core").unwrap_or("xi-core"), tui_builder);
@@ -113,7 +122,13 @@ fn run() -> Result<(), Error> {
 
     let (mut tui, out_rx) = tui.context("Failed to initialize the TUI")?;
 
-    tui.handle_cmd(Command::Open(matches.value_of("file").map(ToString::to_string)));
+    if let Some(user_input) = stdin_string {
+        let mut temp_file = tempfile::NamedTempFile::new()?;
+        temp_file.write_all(user_input.as_bytes())?;
+        tui.handle_cmd(Command::Open(temp_file.path().as_os_str().to_str().map(ToString::to_string)));
+    } else {
+        tui.handle_cmd(Command::Open(matches.value_of("file").map(ToString::to_string)));
+    }
     tui.handle_cmd(Command::SetTheme("base16-eighties.dark".into()));
 
     info!("spawning the TUI on the event loop");
