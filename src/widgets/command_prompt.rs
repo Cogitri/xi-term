@@ -25,6 +25,8 @@ impl CommandPrompt {
             Event::Key(Key::Delete) => self.delete(),
             Event::Key(Key::Left) => self.left(),
             Event::Key(Key::Right) => self.right(),
+            Event::Key(Key::Down) => Some(Command::MoveDown),
+            Event::Key(Key::Up) => Some(Command::MoveUp),
             Event::Key(Key::Char(chr)) => self.new_key(*chr),
             _ => None,
         }

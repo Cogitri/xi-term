@@ -195,7 +195,7 @@ impl View {
             .lines()
             .iter()
             .skip(self.window.start() as usize)
-            .take(self.window.size() as usize);
+            .take(self.window.size() as usize - 1);
 
 
 
@@ -211,8 +211,8 @@ impl View {
         // render empty lines to fill the view window.
         let line_count = self.cache.lines().len() as u16;
         let win_size = self.window.size();
-        if win_size > line_count {
-            for num in line_count..win_size {
+        if win_size - 1 > line_count {
+            for num in line_count..win_size-1 {
                 line_strings.push_str(&self.render_line_str(
                     &Line::default(),
                     None,

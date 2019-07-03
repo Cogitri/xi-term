@@ -76,7 +76,7 @@ impl Tui {
                 self.exit();
             },
             _ => {
-                panic!("unwated command: {:?}", cmd);
+                panic!("unexpected command: {:?}", cmd);
             },
         }
     }
