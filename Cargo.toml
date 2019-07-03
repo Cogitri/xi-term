@@ -1,6 +1,6 @@
 [package]
 authors = ["Corentin Henry <corentinhenry@gmail.com>"]
-name = "xi-term"
+name = "xi-pager"
 version = "0.1.0"
 
 [dependencies]
