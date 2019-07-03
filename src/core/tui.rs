@@ -16,6 +16,7 @@ use xdg::BaseDirectories;
 use core::{Command, Terminal, TerminalEvent};
 use widgets::{CommandPrompt, Editor};
 use std::sync::mpsc::{Sender, Receiver, channel};
+use tempfile::NamedTempFile;
 
 pub struct Tui {
     editor: Editor,
@@ -24,6 +25,7 @@ pub struct Tui {
     term_size: (u16, u16),
     shutdown: bool,
     out_sender: Sender<String>,
+    pub file: Option<NamedTempFile>,
 }
 
 impl Tui {
@@ -45,6 +47,7 @@ impl Tui {
             editor: Editor::new(client, events),
             prompt: CommandPrompt::default(),
             out_sender: tx,
+            file: None,
         }, rx))
     }
 
@@ -71,6 +74,11 @@ impl Tui {
             Command::PageDown => self.editor.page_down(),
             Command::PageUp => self.editor.page_up(),
             Command::ToggleLineNumbers => self.editor.toggle_line_numbers(),
+            Command::OpenFile(file) => {
+                let path = file.path().as_os_str().to_str().map(ToString::to_string);
+                self.editor.open(path);
+                self.file = Some(file)
+            },
             Command::Out(string) => {
                 self.out_sender.send(string).unwrap();
                 self.exit();

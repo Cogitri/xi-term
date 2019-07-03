@@ -17,6 +17,8 @@ extern crate tokio;
 extern crate xdg;
 extern crate xrl;
 extern crate indexmap;
+extern crate nix;
+extern crate tempfile;
 
 mod core;
 mod widgets;
@@ -29,7 +31,7 @@ use log4rs::config::{Appender, Config, Logger, Root};
 use xrl::spawn;
 
 use core::{Tui, TuiServiceBuilder, Command};
-use std::io::{stdin, Read, Write};
+use std::io::{stdin, Read, Write, stderr};
 
 fn configure_logs(logfile: &str) {
     let tui = FileAppender::builder().build(logfile).unwrap();
@@ -95,11 +97,11 @@ fn run() -> Result<(), Error> {
     let stdin_string = if matches.value_of("file").is_none() {
         let mut buffer = String::new();
         stdin().read_to_string(&mut buffer)?;
+        force_set_to_stdin();
         Some(buffer)
     } else {
         None
     };
-
 
     info!("starting xi-core");
     let (tui_builder, core_events_rx) = TuiServiceBuilder::new();
@@ -125,7 +127,7 @@ fn run() -> Result<(), Error> {
     if let Some(user_input) = stdin_string {
         let mut temp_file = tempfile::NamedTempFile::new()?;
         temp_file.write_all(user_input.as_bytes())?;
-        tui.handle_cmd(Command::Open(temp_file.path().as_os_str().to_str().map(ToString::to_string)));
+        tui.handle_cmd(Command::OpenFile(temp_file));
     } else {
         tui.handle_cmd(Command::Open(matches.value_of("file").map(ToString::to_string)));
     }
@@ -141,4 +143,15 @@ fn run() -> Result<(), Error> {
     }
 
     Ok(())
+}
+
+/// switch stdin to tty
+/// after leave function, stdin is set as tty.
+fn force_set_to_stdin() {
+    use std::fs::File;
+    use nix::unistd;
+    use std::io;
+    use std::os::unix::io::AsRawFd;
+    let file = File::open("/dev/tty").unwrap();
+    let _ = unistd::dup2(file.as_raw_fd(), io::stdin().as_raw_fd());
 }

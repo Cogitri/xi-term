@@ -5,6 +5,7 @@
 use xrl::ViewId;
 
 use std::str::FromStr;
+use tempfile::NamedTempFile;
 
 #[derive(Debug)]
 pub enum Command {
@@ -18,6 +19,8 @@ pub enum Command {
     Delete,
     /// Open A new file.
     Open(Option<String>),
+    /// Open a new file, keeping the file
+    OpenFile(NamedTempFile),
     /// Cycle to the next View.
     NextBuffer,
     /// Cycle to the previous buffer.

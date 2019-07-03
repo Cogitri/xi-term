@@ -8,8 +8,7 @@ use futures::{Async, Poll, Sink, Stream};
 use failure::{Error, ResultExt};
 
 use termion::event::Event;
-use termion::input::MouseTerminal;
-use termion::input::TermRead;
+use termion::input::{MouseTerminal, TermRead};
 use termion::raw::{IntoRawMode, RawTerminal};
 use termion::screen::AlternateScreen;
 use termion::terminal_size;
@@ -30,7 +29,7 @@ impl Terminal {
         let stdout = MouseTerminal::from(AlternateScreen::from(
             io::stdout()
                 .into_raw_mode()
-                .context("Failed to put terminal into raw mode")?,
+                .expect("Failed to put terminal into raw mode"),
         ));
 
         let term = Terminal {
