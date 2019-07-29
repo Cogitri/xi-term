@@ -4,6 +4,7 @@
 
 use std::io::Error;
 use std::io::Write;
+use std::ops::RangeBounds;
 use termion::event::{Event, Key};
 
 use core::{Command, ParseCommandError};
@@ -22,6 +23,7 @@ impl CommandPrompt {
         match input {
             Event::Key(Key::Char('\n')) => self.finalize(),
             Event::Key(Key::Backspace) | Event::Key(Key::Ctrl('h')) => self.back(),
+			Event::Key(Key::Ctrl('w')) => self.back_word(),
             Event::Key(Key::Delete) => self.delete(),
             Event::Key(Key::Left) => self.left(),
             Event::Key(Key::Right) => self.right(),
@@ -52,6 +54,35 @@ impl CommandPrompt {
         }
         None
     }
+
+	fn back_word(&mut self) -> Option<Command> {
+		if !self.chars.is_empty() {
+			let mut bytes: Vec<u8> = self.chars.bytes().collect();
+
+			let mut removed_chars = 0;
+
+			for i in (0..self.dex).rev() {
+				if let Some(ch) = bytes.get(i) {
+					if ch == &b' ' {
+						bytes.remove(i);
+						removed_chars += 1;
+					} else {
+						break;
+					}
+				}
+			}
+
+			let first_space = bytes
+				.drain(..self.dex - removed_chars)
+				.rposition(|ch| ch == b' ')
+				.map_or(0, |x| x + 1);
+
+			self.chars.replace_range(first_space..self.dex, "");
+
+			self.dex = first_space;
+		}
+		None
+	}
 
     fn back(&mut self) -> Option<Command> {
         if !self.chars.is_empty() {
