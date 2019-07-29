@@ -9,11 +9,11 @@ failure = "0.1.1"
 futures = "0.1.18"
 log = "0.4.1"
 log4rs = "0.8.0"
-termion = {git="https://gitlab.redox-os.org/redox-os/termion"}
+termion = { git = "https://gitlab.redox-os.org/redox-os/termion", rev = "68d76530" }
 tokio = "0.1.7"
 xdg = "2.1.0"
 indexmap = "1.0.1"
 # xrl = "0.0.5"
-xrl = { git = "https://github.com/xi-frontend/xrl" }
+xrl = { git = "https://github.com/xi-frontend/xrl", rev = "5788adfe" }
 tempfile = "3.1.0"
 nix = "0.14.1"
